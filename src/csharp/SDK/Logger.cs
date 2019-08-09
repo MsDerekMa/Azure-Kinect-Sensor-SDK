@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.Azure.Kinect.Sensor
 {
@@ -18,11 +19,10 @@ namespace Microsoft.Azure.Kinect.Sensor
         private static readonly NativeMethods.k4a_logging_message_cb_t DebugMessageHandler = OnDebugMessage;
         private static bool isInitialized;
 
-        private static event Action<LogMessage> LogMessageHandlers;
-
         /// <summary>
         /// Occurs when the Azure Kinect Sensor SDK delivers a debug message.
         /// </summary>
+        [SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "This doesn't gain any benefit from using EventHandler")]
         public static event Action<LogMessage> LogMessage
         {
             add
@@ -46,6 +46,8 @@ namespace Microsoft.Azure.Kinect.Sensor
                 }
             }
         }
+
+        private static event Action<LogMessage> LogMessageHandlers;
 
         /// <summary>
         /// Initializes the <see cref="Logger"/> class to begin receiving messages from the Azure Kinect Sensor SDK.

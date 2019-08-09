@@ -274,10 +274,12 @@ namespace Microsoft.Azure.Kinect.Sensor
                     throw new ObjectDisposedException(nameof(Device));
                 }
 
+                // TODO: Remove when CA1508 bug https://github.com/dotnet/roslyn-analyzers/issues/2250 is fixed.
+#pragma warning disable CA1508 // Avoid dead conditional code
                 using (LoggingTracer tracer = new LoggingTracer())
+#pragma warning restore CA1508 // Avoid dead conditional code
                 {
                     NativeMethods.k4a_wait_result_t result = NativeMethods.k4a_device_get_capture(this.handle, out NativeMethods.k4a_capture_t capture, (int)timeout.TotalMilliseconds);
-
                     if (result == NativeMethods.k4a_wait_result_t.K4A_WAIT_RESULT_TIMEOUT)
                     {
                         throw new TimeoutException("Timed out waiting for capture");
@@ -328,7 +330,10 @@ namespace Microsoft.Azure.Kinect.Sensor
                     throw new ObjectDisposedException(nameof(Device));
                 }
 
+                // TODO: Remove when CA1508 bug https://github.com/dotnet/roslyn-analyzers/issues/2250 is fixed.
+#pragma warning disable CA1508 // Avoid dead conditional code
                 using (LoggingTracer tracer = new LoggingTracer())
+#pragma warning restore CA1508 // Avoid dead conditional code
                 {
                     NativeMethods.k4a_imu_sample_t sample = new NativeMethods.k4a_imu_sample_t();
                     NativeMethods.k4a_wait_result_t result = NativeMethods.k4a_device_get_imu_sample(this.handle, sample, (int)timeout.TotalMilliseconds);
