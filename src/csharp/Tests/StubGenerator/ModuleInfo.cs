@@ -1,5 +1,9 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿//------------------------------------------------------------------------------
+// <copyright file="ModuleInfo.cs" company="Microsoft">
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+// </copyright>
+//------------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,6 +12,9 @@ using System.Text.RegularExpressions;
 
 namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
 {
+    /// <summary>
+    /// TODO: Dumps the exports of a native DLL, for use in the STUB and detecting/loading the MOCKs.
+    /// </summary>
     internal class ModuleInfo
     {
         private ModuleInfo(string[] exports)
@@ -55,7 +62,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
 
                     if (link.ExitCode != 0)
                     {
-                        throw new AzureKinectStubGeneratorException("Link /dump failed");
+                        throw new StubGeneratorException("Link /dump failed");
                     }
 
                     foreach (Match m in regex.Matches(output))
@@ -68,7 +75,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
             }
             catch (Exception ex)
             {
-                throw new AzureKinectStubGeneratorException("Failed to analyze module", ex);
+                throw new StubGeneratorException("Failed to analyze module", ex);
             }
 
             return new ModuleInfo(exports.ToArray());

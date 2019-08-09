@@ -100,7 +100,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
 
                     if (cl.ExitCode != 0)
                     {
-                        throw new AzureKinectStubGeneratorException("Compilation failed: " + output);
+                        throw new StubGeneratorException("Compilation failed: " + output);
                     }
                 }
             }
@@ -108,7 +108,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
             {
                 if ((uint)ex.ErrorCode == 0x80004005)
                 {
-                    throw new AzureKinectStubGeneratorException($"Could not find compiler \"{options.CompilerPath}\". Ensure you are running in a developer environment.", ex);
+                    throw new StubGeneratorException($"Could not find compiler \"{options.CompilerPath}\". Ensure you are running in a developer environment.", ex);
                 }
                 else
                 {

@@ -1,6 +1,9 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿//------------------------------------------------------------------------------
+// <copyright file="StubbedModule.cs" company="Microsoft">
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using System;
+// </copyright>
+//------------------------------------------------------------------------------
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,14 +11,23 @@ using System.Text;
 
 namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
 {
+    /// <summary>
+    /// Represents a native library that is being stubbed and mocked.
+    /// </summary>
     public class StubbedModule
     {
-        public CompilerOptions CompilerOptions { get; }
-
-        public string ModuleName { get; }
-
         private readonly Dictionary<string, FunctionImplementation> currentFunctionImplementations = new Dictionary<string, FunctionImplementation>();
         private readonly Dictionary<Hash, ModuleImplementation> implementedModules = new Dictionary<Hash, ModuleImplementation>();
+
+        /// <summary>
+        /// Gets the compiler options that will be used to compile the stubbed module.
+        /// </summary>
+        public CompilerOptions CompilerOptions { get; }
+
+        /// <summary>
+        /// Gets the name of the module that is being stubbed.
+        /// </summary>
+        public string ModuleName { get; }
 
         private void GenerateStub(string modulePath, NativeInterface @interface, CompilerOptions options)
         {
@@ -26,21 +38,21 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
                 string templatePrototype = def.ReturnType + "(" + string.Join(",", def.ArgumentType) + ")";
 
                 StringBuilder stubFunction = new StringBuilder();
-                stubFunction.AppendLine(def.Declaration);
-                stubFunction.AppendLine("{");
+                _ = stubFunction.AppendLine(def.Declaration);
+                _ = stubFunction.AppendLine("{");
                 string passthroughArguments = string.Join(", ", (new string[] { $"\"{def.Name}\"" }).Concat(def.ArgumentName));
-                string functionReturn = def.ReturnType == "void" ? "" : "return ";
-                stubFunction.AppendLine($"    Stub_RecordCall(\"{def.Name}\");");
-                stubFunction.AppendLine($"    {functionReturn}redirect<{templatePrototype}, {def.ReturnType}>({passthroughArguments});");
-                stubFunction.AppendLine("}");
-                stubFunction.AppendLine();
+                string functionReturn = def.ReturnType == "void" ? string.Empty : "return ";
+                _ = stubFunction.AppendLine($"    Stub_RecordCall(\"{def.Name}\");");
+                _ = stubFunction.AppendLine($"    {functionReturn}redirect<{templatePrototype}, {def.ReturnType}>({passthroughArguments});");
+                _ = stubFunction.AppendLine("}");
+                _ = stubFunction.AppendLine();
 
                 stubCode += stubFunction.ToString();
             }
 
             string sourceFilePath = Path.Combine(options.TempPath.FullName, "stubfunctions.cpp");
 
-            using (var filestream = File.CreateText(sourceFilePath))
+            using (StreamWriter filestream = File.CreateText(sourceFilePath))
             {
                 filestream.WriteLine("#include \"stub.h\"");
                 filestream.WriteLine($"// Defined at {options.CodeHeader.SourceFileName} line {options.CodeHeader.SourceLineNumber}");
@@ -72,7 +84,9 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
         public static StubbedModule Get(string moduleName)
         {
             if (!stubbedModules.ContainsKey(moduleName))
+            {
                 return null;
+            }
 
             return stubbedModules[moduleName];
         }
@@ -80,7 +94,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
         {
             if (stubbedModules.ContainsKey(moduleName))
             {
-                throw new AzureKinectStubGeneratorException("Module already stubbed");
+                throw new StubGeneratorException("Module already stubbed");
             }
             else
             {
@@ -95,7 +109,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
             options = options ?? CompilerOptions.GetDefault();
             if (moduleName.EndsWith(".dll"))
             {
-                throw new AzureKinectStubGeneratorException("Module name should not include file extension");
+                throw new StubGeneratorException("Module name should not include file extension");
             }
 
             this.ModuleName = moduleName;
@@ -122,7 +136,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
             string executingDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             string modulePath = Path.Combine(executingDirectory, moduleName + ".dll");
 
-            GenerateStub(modulePath, @interface, options);
+            this.GenerateStub(modulePath, @interface, options);
         }
 
         internal int GetTotalCallCount(string function)
@@ -132,21 +146,21 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
 
         public void SetImplementation(CodeString code)
         {
-            Hash hash = Hash.GetHash(code) + Hash.GetHash(CompilerOptions);
-            if (!implementedModules.ContainsKey(hash))
+            Hash hash = Hash.GetHash(code) + Hash.GetHash(this.CompilerOptions);
+            if (!this.implementedModules.ContainsKey(hash))
             {
-                implementedModules.Add(hash, ModuleImplementation.Compile(code, CompilerOptions));
+                this.implementedModules.Add(hash, ModuleImplementation.Compile(code, this.CompilerOptions));
             }
 
-            ModuleImplementation i = implementedModules[hash];
+            ModuleImplementation i = this.implementedModules[hash];
 
             if (i.Functions.Where((x) => { return !x.Value.Name.StartsWith("Stub_"); }).Count() == 0)
             {
-                throw new AzureKinectStubGeneratorException("No exported functions found in implementation");
+                throw new StubGeneratorException("No exported functions found in implementation");
             }
-            foreach (var function in i.Functions)
+            foreach (KeyValuePair<string, FunctionImplementation> function in i.Functions)
             {
-                SetImplementation(function.Key, function.Value);
+                this.SetImplementation(function.Key, function.Value);
             }
         }
 

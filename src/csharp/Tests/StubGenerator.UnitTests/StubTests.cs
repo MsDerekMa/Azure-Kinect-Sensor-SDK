@@ -157,7 +157,7 @@ uint32_t k4a_device_get_installed_count()
         [Test]
         public void NoExports()
         {
-            _ = Assert.Throws(typeof(AzureKinectStubGeneratorException), () =>
+            _ = Assert.Throws(typeof(StubGeneratorException), () =>
               {
                   this.k4a.SetImplementation(@"
 uint32_t this_function_is_not_an_export()
@@ -170,7 +170,7 @@ uint32_t this_function_is_not_an_export()
         [Test]
         public void CompilationError()
         {
-            _ = Assert.Throws(typeof(AzureKinectStubGeneratorException), () =>
+            _ = Assert.Throws(typeof(StubGeneratorException), () =>
               {
                   this.k4a.SetImplementation(@"
 ThisWillFailToCompile;

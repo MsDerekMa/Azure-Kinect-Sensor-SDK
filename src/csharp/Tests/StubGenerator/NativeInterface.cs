@@ -1,5 +1,9 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿//------------------------------------------------------------------------------
+// <copyright file="NativeInterface.cs" company="Microsoft">
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+// </copyright>
+//------------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +11,10 @@ using System.Text.RegularExpressions;
 
 namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
 {
+    /// <summary>
+    /// TODO: Parser for k4a.h?
+    /// Loads the DLL and Header to get all of the functions.
+    /// </summary>
     public class NativeInterface
     {
         public NativeInterface(FileInfo modulePath, FileInfo headerPath, IReadOnlyList<FunctionInfo> functions)
@@ -92,7 +100,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Test.StubGenerator
                     }
                     else
                     {
-                        throw new AzureKinectStubGeneratorException($"Header declares a function not found in module exports. Function \"{info.Declaration}\" was not found in exports.");
+                        throw new StubGeneratorException($"Header declares a function not found in module exports. Function \"{info.Declaration}\" was not found in exports.");
                     }
                 }
             }

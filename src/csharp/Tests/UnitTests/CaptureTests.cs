@@ -310,6 +310,7 @@ k4a_image_t k4a_capture_get_color_image(k4a_capture_t capture_handle)
 
 void k4a_capture_set_color_image(k4a_capture_t capture_handle, k4a_image_t image)
 {
+    // TODO: This SHOULD be taking a reference, but can't because it is in a different assembly
     color = image;
 }
 
