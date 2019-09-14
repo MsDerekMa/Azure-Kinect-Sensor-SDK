@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using Microsoft.Azure.Kinect.Sensor;
 using Microsoft.Azure.Kinect.Sensor.WPF;
 
 namespace Microsoft.Azure.Kinect.Sensor.Examples.WPFViewer
@@ -63,7 +62,6 @@ namespace Microsoft.Azure.Kinect.Sensor.Examples.WPFViewer
                 using (Image outputColorImage = new Image(ImageFormat.ColorBGRA32, colorWidth, colorHeight))
                 using (Transformation transform = device.GetCalibration().CreateTransformation())
                 {
-
                     while (this.running)
                     {
                         if (!Environment.Is64BitProcess)

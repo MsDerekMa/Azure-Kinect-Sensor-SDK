@@ -20,6 +20,8 @@ namespace Microsoft.Azure.Kinect.Sensor.Examples.WinForms
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Maintainability", "CA1501:Avoid excessive inheritance", Justification = "This is the accepted WinForms pattern.")]
     public partial class Form1 : Form
     {
+        private bool running = true;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Form1"/> class.
         /// </summary>
@@ -53,39 +55,53 @@ namespace Microsoft.Azure.Kinect.Sensor.Examples.WinForms
                 int frameCount = 0;
                 sw.Start();
 
-                while (true)
+                Bitmap depthVisualization = null;
+                byte[] rgbValues = null;
+
+                while (this.running)
                 {
                     using (Capture capture = await Task.Run(() => device.GetCapture()).ConfigureAwait(true))
                     {
-                        this.pictureBoxColor.Image = capture.Color.CreateBitmap();
-
-                        this.pictureBoxDepth.Image = await Task.Run(() =>
+                        Task<Bitmap> colorImageTask = Task.Run(() =>
                         {
-                            Bitmap depthVisualization = new Bitmap(capture.Depth.WidthPixels, capture.Depth.HeightPixels, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                            return capture.Color.CreateBitmap();
+                        });
 
-                            BitmapData bitmapData = depthVisualization.LockBits(new Rectangle(0, 0, depthVisualization.Width, depthVisualization.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                        Task<Bitmap> depthImageTask = Task.Run(() =>
+                        {
+                            BitmapData bitmapData;
 
-                            IntPtr ptr = bitmapData.Scan0;
-
-                            int bytes = Math.Abs(bitmapData.Stride) * depthVisualization.Height;
-
-                            byte[] rgbValues = new byte[bytes];
-
-                            System.Runtime.InteropServices.Marshal.Copy(ptr, rgbValues, 0, bytes);
+                            if (depthVisualization == null)
+                            {
+                                depthVisualization = new Bitmap(capture.Depth.WidthPixels, capture.Depth.HeightPixels, PixelFormat.Format32bppArgb);
+                                bitmapData = depthVisualization.LockBits(new Rectangle(0, 0, depthVisualization.Width, depthVisualization.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                                int bytes = Math.Abs(bitmapData.Stride) * depthVisualization.Height;
+                                rgbValues = new byte[bytes];
+                            }
+                            else
+                            {
+                                bitmapData = depthVisualization.LockBits(new Rectangle(0, 0, depthVisualization.Width, depthVisualization.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                            }
 
                             ushort[] depthValues = capture.Depth.GetPixels<ushort>().ToArray();
 
                             for (int i = 0; i < depthValues.Length; i++)
                             {
                                 ushort depthValue = depthValues[i];
-                                Color color;
+
                                 if (depthValue == 0)
                                 {
-                                    color = Color.Red;
+                                    // Set the color to Red, 0xFF0000
+                                    rgbValues[i * 4] = 0; // Blue
+                                    rgbValues[(i * 4) + 1] = 0; // Green
+                                    rgbValues[(i * 4) + 2] = 0xFF; // Red
                                 }
                                 else if (depthValue == ushort.MaxValue)
                                 {
-                                    color = Color.Green;
+                                    // Set the color to Green, 0x008000
+                                    rgbValues[i * 4] = 0; // Blue
+                                    rgbValues[(i * 4) + 1] = 0x80; // Green
+                                    rgbValues[(i * 4) + 2] = 0; // Red
                                 }
                                 else
                                 {
@@ -93,29 +109,37 @@ namespace Microsoft.Azure.Kinect.Sensor.Examples.WinForms
 
                                     if (brightness > 1.0f)
                                     {
-                                        color = Color.White;
+                                        // Set the color to White, 0xFFFFFF
+                                        rgbValues[i * 4] = 0xFF; // Blue
+                                        rgbValues[(i * 4) + 1] = 0xFF; // Green
+                                        rgbValues[(i * 4) + 2] = 0xFF; // Red
                                     }
                                     else
                                     {
-                                        int c = (int)(brightness * 250);
-                                        color = Color.FromArgb(c, c, c);
+                                        // Set the color to a gray based on how far away the point is.
+                                        byte c = (byte)(brightness * 250);
+                                        rgbValues[i * 4] = c; // Blue
+                                        rgbValues[(i * 4) + 1] = c; // Green
+                                        rgbValues[(i * 4) + 2] = c; // Red
                                     }
                                 }
-                                rgbValues[i * 4] = color.B;
-                                rgbValues[(i * 4) + 1] = color.G;
-                                rgbValues[(i * 4) + 2] = color.R;
-                                rgbValues[(i * 4) + 3] = color.A;
+
+                                // Set the Alpha to max since it isn't being used.
+                                rgbValues[(i * 4) + 3] = 0xFF;
                             }
 
-                            System.Runtime.InteropServices.Marshal.Copy(rgbValues, 0, ptr, bytes);
+                            System.Runtime.InteropServices.Marshal.Copy(rgbValues, 0, bitmapData.Scan0, rgbValues.Length);
 
                             depthVisualization.UnlockBits(bitmapData);
 
                             return depthVisualization;
-                        }).ConfigureAwait(true);
+                        });
 
-                        this.Invalidate();
+                        this.pictureBoxColor.Image = await colorImageTask.ConfigureAwait(true);
+                        this.pictureBoxDepth.Image = await depthImageTask.ConfigureAwait(true);
                     }
+
+                    this.Update();
 
                     ++frameCount;
 
