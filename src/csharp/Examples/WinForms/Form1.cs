@@ -73,6 +73,7 @@ namespace Microsoft.Azure.Kinect.Sensor.Examples.WinForms
 
                             if (depthVisualization == null)
                             {
+                                // The bitmap and backing buffer can be allocated just once and re-used to prevent allocations every frame.
                                 depthVisualization = new Bitmap(capture.Depth.WidthPixels, capture.Depth.HeightPixels, PixelFormat.Format32bppArgb);
                                 bitmapData = depthVisualization.LockBits(new Rectangle(0, 0, depthVisualization.Width, depthVisualization.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
                                 int bytes = Math.Abs(bitmapData.Stride) * depthVisualization.Height;
@@ -85,6 +86,8 @@ namespace Microsoft.Azure.Kinect.Sensor.Examples.WinForms
 
                             ushort[] depthValues = capture.Depth.GetPixels<ushort>().ToArray();
 
+                            // Loop through and colorize the depth so that we can visual it. Any pixel that has a value of 0 is invalid (too close, too far away, multi-path, etc) and
+                            // will be colored Red. Everything else is gray scale based on how far away it is. The values are scaled anything 2 meters or greater is fully white.
                             for (int i = 0; i < depthValues.Length; i++)
                             {
                                 ushort depthValue = depthValues[i];
@@ -95,13 +98,6 @@ namespace Microsoft.Azure.Kinect.Sensor.Examples.WinForms
                                     rgbValues[i * 4] = 0; // Blue
                                     rgbValues[(i * 4) + 1] = 0; // Green
                                     rgbValues[(i * 4) + 2] = 0xFF; // Red
-                                }
-                                else if (depthValue == ushort.MaxValue)
-                                {
-                                    // Set the color to Green, 0x008000
-                                    rgbValues[i * 4] = 0; // Blue
-                                    rgbValues[(i * 4) + 1] = 0x80; // Green
-                                    rgbValues[(i * 4) + 2] = 0; // Red
                                 }
                                 else
                                 {
